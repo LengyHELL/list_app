@@ -16,7 +16,7 @@ int main(int argc, char** argv) {
   engine.load_image("img/star.png");
   engine.load_image("img/basic_style.png");
 
-  std::string text = "SM AS";
+  std::string text = "HELLO";
 
   Rect button_body(10, 10, 75, 25);
 
