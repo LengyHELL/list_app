@@ -1,7 +1,11 @@
 #include "Frame.hpp"
 
 Frame::Frame(const std::string& style, const Rect& body, const Coord& cut_size)
-  : style(style), body(body), cut_size(cut_size) {
+  : style(style), body(body), cut_size(cut_size) {}
+
+void Frame::draw(const Engine& engine) {
+  style_cut.clear();
+  
   style_cut.push_back(std::pair<Coord, Coord>(Coord(body.x, body.y), cut_size));
   style_cut.push_back(std::pair<Coord, Coord>(Coord(body.x + cut_size.x, body.y), Coord(body.w - 2 * cut_size.x, cut_size.y)));
   style_cut.push_back(std::pair<Coord, Coord>(Coord(body.x + (body.w - cut_size.x), body.y), cut_size));
@@ -12,9 +16,7 @@ Frame::Frame(const std::string& style, const Rect& body, const Coord& cut_size)
   style_cut.push_back(std::pair<Coord, Coord>(Coord(body.x, body.y + (body.h - cut_size.y)), cut_size));
   style_cut.push_back(std::pair<Coord, Coord>(Coord(body.x + cut_size.x, body.y + (body.h - cut_size.y)), Coord(body.w - 2 * cut_size.x, cut_size.y)));
   style_cut.push_back(std::pair<Coord, Coord>(Coord(body.x + (body.w - cut_size.x), body.y + (body.h - cut_size.y)), cut_size));
-}
 
-void Frame::draw(const Engine& engine) {
   Rect a_cut(8 * cut_size.x, 0, cut_size.x, cut_size.y);
   engine.draw_image(style, body, 0, {255, 255, 255, 255}, a_cut);
 

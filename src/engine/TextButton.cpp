@@ -12,20 +12,19 @@ void TextButton::draw(const Engine& engine) {
 
   button_frame.draw(engine);
 
-  if (mouse_click) {
+  if (selected) {
     a_cut.x = 10 * cut_size.x;
     a_cut.y = 0;
     engine.draw_image(button_frame.get_style(), body, 0, {255, 255, 255, 100}, a_cut);
   }
-  else if (mouse_hover) {
+  if (mouse_hover) {
     a_cut.x = 9 * cut_size.x;
     a_cut.y = 0;
     engine.draw_image(button_frame.get_style(), body, 0, {255, 255, 255, 100}, a_cut);
   }
 
   Rect a_text = engine.size_text(text, text_size);
-  Coord place = Coord(body.x, body.y) + (Coord(body.w, body.h) / 2);
-  place -= Coord(a_text.w, a_text.h) / 2;
+  Coord place = Coord(body.x, body.y) + (Coord(text_size / 2, (body.h / 2) - (a_text.h / 2)));
   engine.draw_text(text, place, text_color, text_size);
 }
 
@@ -42,10 +41,12 @@ void TextButton::update(const Engine& engine) {
   }
   mouse_click = mouse_hover && mouse_left && !click_lock;
 
-  if (on_mouse_down) {
-    selected = mouse_click && engine.get_mouse_button_down();
-  }
-  else {
-    selected = mouse_click && engine.get_mouse_button_up();
+  if (mouse_click) {
+    if (on_mouse_down && engine.get_mouse_button_down()) {
+      selected = !selected;
+    }
+    if (!on_mouse_down && engine.get_mouse_button_up()) {
+      selected = !selected;
+    }
   }
 }

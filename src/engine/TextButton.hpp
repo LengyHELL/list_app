@@ -8,10 +8,12 @@
 #include <string>
 
 class TextButton {
+public:
   Frame button_frame;
 
   Rect body = Rect(0, 0, 0, 0);
 
+private:
   std::string text = "";
   unsigned text_size = 0;
   SDL_Color text_color = {0, 0, 0, 0};
