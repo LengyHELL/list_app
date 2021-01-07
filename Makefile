@@ -1,9 +1,10 @@
 SRC_DIR := src
+ENG_SRC_DIR := src/engine
 OBJ_DIR := obj
 OBJ_DIR_WIN32 := obj_win32
 
 EXE 			:= list_app
-SRC 			:= $(wildcard $(SRC_DIR)/*.cpp)
+SRC 			:= $(wildcard $(SRC_DIR)/*.cpp) $(wildcard $(SRC_DIR)/engine/*.cpp)
 OBJ 			:= $(SRC:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 OBJ_WIN32	:= $(SRC:$(SRC_DIR)/%.cpp=$(OBJ_DIR_WIN32)/%.o)
 
@@ -11,8 +12,9 @@ OBJ_WIN32	:= $(SRC:$(SRC_DIR)/%.cpp=$(OBJ_DIR_WIN32)/%.o)
 
 
 all: CXX				:= g++-9
-all: CPPFLAGS		:= -MMD -MP
+all: CPPFLAGS		:= -Idev/engine/include -MMD -MP
 all: CXXFLAGS		:= -std=c++17 -Wall -g
+all: LDFLAGS		:=
 all: LDLIBS			:= -lSDL2main -lSDL2 -lSDL2_image -lSDL2_ttf
 
 all: $(EXE).out
@@ -20,14 +22,19 @@ all: $(EXE).out
 
 $(EXE).out: $(OBJ)
 	@echo "Linking ..."
-	@$(CXX) $^ $(LDLIBS) -o $@
+	@$(CXX) $(LDFLAGS) $^ -o $@ $(LDLIBS)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
-	 @echo "Compiling $@ ..."
+	@echo "Compiling $@ ..."
+	@$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
+
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
+	@echo "Compiling $@ ..."
 	@$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
 $(OBJ_DIR):
-	mkdir -p $@
+	@mkdir -p $@
+	@mkdir -p $@/engine
 
 
 win32: CXX				:= i686-w64-mingw32-g++
@@ -41,18 +48,20 @@ win32: $(EXE).exe
 
 $(EXE).exe: $(OBJ_WIN32)
 	@echo "Linking ..."
-	@$(CXX) $(LDFLAGS) $^ $(LDLIBS) -o $@
+	@$(CXX) -static-libgcc -static-libstdc++ -Wl,-subsystem,windows $(LDFLAGS) $^ -o $@ $(LDLIBS)
 
 $(OBJ_DIR_WIN32)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR_WIN32)
 	@echo "Compiling $@ ..."
 	@$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
 $(OBJ_DIR_WIN32):
-	mkdir -p $@
+	@mkdir -p $@
+	@mkdir -p $@/engine
 
 
 
 -include $(OBJ:.o=.d)
+-include $(OBJ_WIN32:.o=.d)
 
 
 
