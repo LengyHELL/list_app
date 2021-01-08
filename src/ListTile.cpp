@@ -34,7 +34,7 @@ void ListTile::draw(const Engine& engine) {
     a_cut.y = 0;
     engine.draw_image(style, body, 0, {255, 255, 255, 100}, a_cut);
   }
-  else if (mouse_hover) {
+  if (mouse_hover) {
     a_cut.x = 9 * cut_size.x;
     a_cut.y = 0;
     engine.draw_image(style, body, 0, {255, 255, 255, 100}, a_cut);

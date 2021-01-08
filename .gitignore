@@ -2,3 +2,6 @@
 /obj
 /obj_win32
 /test
+/test2
+exclude.txt
+my_list.txt

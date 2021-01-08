@@ -2,6 +2,8 @@
 #include <vector>
 #include <string>
 #include <math.h>
+#include <algorithm>
+#include <fstream>
 
 namespace fs = std::filesystem;
 
@@ -52,14 +54,16 @@ void sort_folders() {
   }
 }
 
-std::vector<Video> get_files(const std::string& dir, const std::string& ext) {
+std::vector<Video> get_files(const std::string& dir, const std::string& ext, const std::vector<std::string> exclude) {
   std::vector<Video> vec;
 
   if (fs::is_directory(fs::path(dir))) {
     for (const auto& entry : fs::directory_iterator(dir)) {
       fs::path current = entry.path();
       if (!fs::is_directory(current) && (current.extension() == ".mkv")) {
-        vec.push_back(Video(current.stem().string(), current));
+        if (std::find(exclude.begin(), exclude.end(), current.string()) == exclude.end()) {
+          vec.push_back(Video(current.stem().string(), current));
+        }
       }
     }
   }
@@ -77,7 +81,47 @@ int main(int argc, char** argv) {
 
   Frame base_frame("img/basic_style.png", Rect(0, 0, engine.get_width(), engine.get_height()));
 
-  std::vector<Video> videos = get_files("./test", ".mkv");
+  std::vector<std::string> exclude;
+
+  std::fstream file("my_list.txt");
+  if (file.is_open()) {
+    std::ofstream file2("exclude.txt");
+    if (file2.is_open()) {
+      std::string line;
+
+      while(getline(file, line)) {
+        file2 << line << '\n';
+      }
+      file2.close();
+    }
+    file.close();
+  }
+
+  file.open("exclude.txt");
+  if (file.is_open()) {
+    std::string line;
+    while(getline(file, line)) {
+      exclude.push_back(line);
+    }
+    file.close();
+  }
+
+  std::vector<Video> videos;
+
+  file.open("folders.txt");
+  if (file.is_open()) {
+    std::string line;
+    while(getline(file, line)) {
+      std::vector<Video> v = get_files(line, ".mkv", exclude);
+      videos.reserve(videos.size() + distance(v.begin(), v.end()));
+      videos.insert(videos.end(), v.begin(), v.end());
+    }
+    file.close();
+  }
+  else {
+    return 1;
+  }
+
   std::vector<ListTile> rows;
 
   float side_gap = 10;
@@ -102,6 +146,8 @@ int main(int argc, char** argv) {
   }
 
   float length = offset * (rows.size() - 1) + tile_height;
+
+  bool delete_lock = true;
 
   while(!engine.get_exit()) {
     engine.update_inputs();
@@ -244,6 +290,31 @@ int main(int argc, char** argv) {
       mouse_set = false;
     }
 
+    if (engine.keyboard_state[SDL_SCANCODE_DELETE] && !delete_lock && (selection_start >= 0) && (selection_end >= 0)) {
+      delete_lock = true;
+      int min, max;
+
+      if (selection_start < selection_end) {
+        min = selection_start;
+        max = selection_end;
+      }
+      else {
+        max = selection_start;
+        min = selection_end;
+      }
+
+      for (int j = max; j >= min; --j) {
+        rows.erase(rows.begin() + j);
+        videos.erase(videos.begin() + j);
+      }
+
+      length = offset * (rows.size() - 1) + tile_height;
+      selection_start = -1;
+      selection_end = -1;
+    }
+
+    if (!engine.keyboard_state[SDL_SCANCODE_DELETE]) { delete_lock = false; }
+
 
     // drawing
     base_frame.draw(engine);
@@ -257,6 +328,20 @@ int main(int argc, char** argv) {
     }
 
     engine.render();
+  }
+
+  std::fstream file2("my_list.txt");
+  if (file2.is_open()) {
+    file2.seekg(0, std::ios::end);
+
+    for (const auto& v : videos) {
+      file2 << v.path.string() << '\n';
+    }
+
+    file.close();
+  }
+  else {
+    return 1;
   }
   return 0;
 }
