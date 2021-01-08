@@ -68,7 +68,7 @@ std::vector<Video> get_files(const std::string& dir, const std::string& ext) {
 
 int main(int argc, char** argv) {
 
-  Engine engine(640, 480, "Test", true);
+  Engine engine(640, 480, "List App", true);
   engine.set_fps_cap(60);
 
   engine.load_font("lhll.ttf");
@@ -88,7 +88,6 @@ int main(int argc, char** argv) {
   bool mouse_hold = false;
   bool mouse_set = false;
   float mouse_start = 0;
-  float drag = 0;
 
   float auto_scroll_dist = 60;
   float scroll_size = 15;
@@ -165,19 +164,11 @@ int main(int argc, char** argv) {
       if (!mouse_set) {
         mouse_set = true;
 
-        int min, max;
-        if (selection_start < selection_end) {
-          min = selection_start;
-          max = selection_end;
-        }
-        else {
-          max = selection_start;
-          min = selection_end;
-        }
+        int min;
+        if (selection_start < selection_end) { min = selection_start; }
+        else { min = selection_end; }
         mouse_start = rows[min].body.y - engine.get_mouse_pos_y();
       }
-
-      drag = (pos + engine.get_mouse_pos_y()) - mouse_start;
 
       if (engine.get_mouse_pos_y() < auto_scroll_dist) {
         pos -= (auto_scroll_dist - engine.get_mouse_pos_y()) / 2;
@@ -211,7 +202,7 @@ int main(int argc, char** argv) {
         }
       }
 
-      while ((((rows[max].body.y + tile_height) - rows[max + 1].body.y) > (tile_height / 1.5)) && (max < ((int)rows.size() - 1))) {
+      while ((((rows[max].body.y + tile_height) - rows[max + 1].body.y) > (tile_height / 2)) && (max < ((int)rows.size() - 1))) {
         for (int j = max; j >= min; --j) {
           ListTile temp = rows[j];
           rows[j] = rows[j + 1];
@@ -230,7 +221,7 @@ int main(int argc, char** argv) {
         selection_end++;
       }
 
-      while ((((rows[min - 1].body.y + tile_height) - rows[min].body.y) > (tile_height / 1.5)) && (min > 0)) {
+      while ((((rows[min - 1].body.y + tile_height) - rows[min].body.y) > (tile_height / 2)) && (min > 0)) {
         for (int j = min; j <= max; ++j) {
           ListTile temp = rows[j];
           rows[j] = rows[j - 1];
