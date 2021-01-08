@@ -11,10 +11,8 @@ class Frame {
   std::string style = "";
   std::list<std::pair<Coord, Coord>> style_cut;
 
-public:
   Rect body = Rect(0, 0, 0, 0);
-  
-private:
+
   Coord cut_size = Coord(0, 0);
 
 public:
