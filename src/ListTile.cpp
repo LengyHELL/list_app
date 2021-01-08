@@ -59,7 +59,7 @@ void ListTile::update(const Engine& engine) {
   if (!mouse_hover && mouse_left) {
     click_lock = true;
   }
-  if (mouse_left && mouse_hover) {
+  if (mouse_left && mouse_hover && selected) {
     timer -= engine.get_ft();
     if (timer < 0) {
       timer = 0;

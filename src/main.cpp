@@ -188,13 +188,6 @@ int main(int argc, char** argv) {
         if (pos > length - window_size) { pos = length - window_size; }
       }
 
-      /*if (rows[array_pos].button_frame.body.y < side_gap) {
-        rows[array_pos].button_frame.body.y = side_gap;
-      }
-      if (rows[array_pos].button_frame.body.y > (engine.get_height() - (side_gap + tile_height))) {
-        rows[array_pos].button_frame.body.y = engine.get_height() - (side_gap + tile_height);
-      }*/
-
       int min, max;
       if (selection_start < selection_end) {
         min = selection_start;
@@ -205,9 +198,16 @@ int main(int argc, char** argv) {
         min = selection_end;
       }
 
+      float base = engine.get_mouse_pos_y() + mouse_start;
+
+      if (base < side_gap) { base = side_gap; }
+      if (base > (engine.get_height() - (side_gap + ((max - min) * offset) + tile_height))) {
+        base = (engine.get_height() - (side_gap + ((max - min) * offset) + tile_height));
+      }
+
       for (int j = min; j <= max; ++j) {
         if (rows[j].selected) {
-          rows[j].body.y = engine.get_mouse_pos_y() + mouse_start + (j - min) * offset;
+          rows[j].body.y = base + (j - min) * offset;
         }
       }
 
