@@ -76,7 +76,6 @@ int main(int argc, char** argv) {
   engine.set_fps_cap(60);
 
   engine.load_font("lhll.ttf");
-  engine.load_image("img/star.png");
   engine.load_image("img/basic_style.png");
 
   Frame base_frame("img/basic_style.png", Rect(0, 0, engine.get_width(), engine.get_height()));
