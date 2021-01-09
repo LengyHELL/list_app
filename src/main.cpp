@@ -31,6 +31,8 @@ int main(int argc, char** argv) {
   engine.load_image("img/basic_style.png");
 
 
+  bool saved = false;
+
   float control_bar_width = 200;
   float side_gap = 10;
   float offset = 30;
@@ -231,6 +233,7 @@ int main(int argc, char** argv) {
 
     if (save_button.selected) {
       save_button.selected = false;
+      saved = true;
       save_state(videos, "my_list.txt");
     }
 
@@ -252,7 +255,7 @@ int main(int argc, char** argv) {
     engine.render();
   }
 
-  if (argc > 1) {
+  if ((argc > 1) && saved) {
     system(argv[1]);
   }
 
