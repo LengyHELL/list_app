@@ -54,7 +54,7 @@ void ListTile::update(const Engine& engine) {
   if (!mouse_left) {
     click_lock = false;
     mouse_hold = false;
-    timer = 250;
+    timer = 150;
   }
   if (!mouse_hover && mouse_left) {
     click_lock = true;

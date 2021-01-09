@@ -1,128 +1,37 @@
-#include <filesystem>
 #include <vector>
 #include <string>
-#include <math.h>
-#include <algorithm>
-#include <fstream>
-
-namespace fs = std::filesystem;
+//#include <math.h>
 
 
 #include "engine/Engine.hpp"
 #include "engine/Rect.hpp"
 #include "engine/Frame.hpp"
+#include "engine/TextButton.hpp"
 
 #include "ListTile.hpp"
+#include "Video.hpp"
+#include "Functions.hpp"
 
 
 #include <iostream>
 
-struct Video {
-  Video(const std::string& name, const std::string& path) : name(name), path(path) {}
-  Video(const std::string& name, const fs::path& path) : name(name), path(path) {}
 
-  std::string name;
-  fs::path path;
-};
-
-void sort_folders() {
-  for (const auto& entry : fs::directory_iterator(".")) {
-    fs::path current = entry.path();
-    fs::path best;
-
-    if (!fs::is_directory(current) && (current.extension() == ".mkv")) {
-      std::string filename = current.stem().string();
-
-      for (const auto& entry2 : fs::directory_iterator(".")) {
-        fs::path current2 = entry2.path();
-
-        if (fs::is_directory(current2)) {
-          std::string folder = current2.stem().string();
-
-          if (filename.find(folder) != std::string::npos) {
-            if (current2.filename().string().size() > best.filename().string().size()) {
-              best = current2;
-            }
-          }
-        }
-      }
-      if (!best.empty()) {
-        fs::path new_path = best.string() + "/" + current.filename().string();
-        fs::rename(entry.path(), new_path);
-      }
-    }
-  }
-}
-
-std::vector<Video> get_files(const std::string& dir, const std::string& ext, const std::vector<std::string> exclude) {
-  std::vector<Video> vec;
-
-  if (fs::is_directory(fs::path(dir))) {
-    for (const auto& entry : fs::directory_iterator(dir)) {
-      fs::path current = entry.path();
-      if (!fs::is_directory(current) && (current.extension() == ".mkv")) {
-        if (std::find(exclude.begin(), exclude.end(), current.string()) == exclude.end()) {
-          vec.push_back(Video(current.stem().string(), current));
-        }
-      }
-    }
-  }
-  return vec;
-}
 
 int main(int argc, char** argv) {
+  std::vector<Video> videos;
+  std::vector<ListTile> rows;
 
-  Engine engine(640, 480, "List App", true);
+  std::cout << argv[1] << std::endl;
+
+  load_state(videos, "folders.txt", "exclude.txt", "my_list.txt");
+
+  Engine engine(1200, 675, "List App", true);
   engine.set_fps_cap(60);
-
   engine.load_font("lhll.ttf");
   engine.load_image("img/basic_style.png");
 
-  Frame base_frame("img/basic_style.png", Rect(0, 0, engine.get_width(), engine.get_height()));
 
-  std::vector<std::string> exclude;
-
-  std::fstream file("my_list.txt");
-  if (file.is_open()) {
-    std::ofstream file2("exclude.txt");
-    if (file2.is_open()) {
-      std::string line;
-
-      while(getline(file, line)) {
-        file2 << line << '\n';
-      }
-      file2.close();
-    }
-    file.close();
-  }
-
-  file.open("exclude.txt");
-  if (file.is_open()) {
-    std::string line;
-    while(getline(file, line)) {
-      exclude.push_back(line);
-    }
-    file.close();
-  }
-
-  std::vector<Video> videos;
-
-  file.open("folders.txt");
-  if (file.is_open()) {
-    std::string line;
-    while(getline(file, line)) {
-      std::vector<Video> v = get_files(line, ".mkv", exclude);
-      videos.reserve(videos.size() + distance(v.begin(), v.end()));
-      videos.insert(videos.end(), v.begin(), v.end());
-    }
-    file.close();
-  }
-  else {
-    return 1;
-  }
-
-  std::vector<ListTile> rows;
-
+  float control_bar_width = 200;
   float side_gap = 10;
   float offset = 30;
   float tile_height = 25;
@@ -140,8 +49,12 @@ int main(int argc, char** argv) {
 
   float pos = 0;
 
+  Frame base_frame("img/basic_style.png", Rect(0, 0, engine.get_width() - control_bar_width, engine.get_height()));
+  Frame controls_frame("img/basic_style.png", Rect(engine.get_width() - control_bar_width, 0, control_bar_width, engine.get_height()));
+  TextButton save_button("img/basic_style.png", Rect(engine.get_width() - (control_bar_width - side_gap), side_gap, control_bar_width - 2 * side_gap, 25), "Save", 16, {0, 0, 0, 0});
+
   for (const auto& v : videos) {
-    rows.push_back(ListTile("img/basic_style.png", Rect(side_gap, 0, engine.get_width() - 2 * side_gap, tile_height), v.name, 16, {0, 0, 0, 0}));
+    rows.push_back(ListTile("img/basic_style.png", Rect(side_gap, 0, (engine.get_width() - control_bar_width) - 2 * side_gap, tile_height), v.name, 16, {0, 0, 0, 0}));
   }
 
   float length = offset * (rows.size() - 1) + tile_height;
@@ -151,6 +64,8 @@ int main(int argc, char** argv) {
   while(!engine.get_exit()) {
     engine.update_inputs();
     base_frame.update(engine);
+    controls_frame.update(engine);
+    save_button.update(engine);
 
     pos -= engine.get_mouse_scroll() * scroll_size;
     if (pos > length - window_size) { pos = length - window_size; }
@@ -314,9 +229,17 @@ int main(int argc, char** argv) {
 
     if (!engine.keyboard_state[SDL_SCANCODE_DELETE]) { delete_lock = false; }
 
+    if (save_button.selected) {
+      save_button.selected = false;
+      save_state(videos, "my_list.txt");
+    }
+
 
     // drawing
     base_frame.draw(engine);
+    controls_frame.draw(engine);
+
+    save_button.draw(engine);
 
     for (auto& r : rows) {
       if (!r.selected) { r.draw(engine); }
@@ -329,18 +252,9 @@ int main(int argc, char** argv) {
     engine.render();
   }
 
-  std::fstream file2("my_list.txt");
-  if (file2.is_open()) {
-    file2.seekg(0, std::ios::end);
-
-    for (const auto& v : videos) {
-      file2 << v.path.string() << '\n';
-    }
-
-    file.close();
+  if (argc > 1) {
+    system(argv[1]);
   }
-  else {
-    return 1;
-  }
+
   return 0;
 }
