@@ -25,7 +25,7 @@ int main(int argc, char** argv) {
 
   load_state(videos, "folders.txt", "exclude.txt", "my_list.txt");
 
-  Engine engine(1200, 675, "List App", true);
+  Engine engine(1200, 675, "List App", false);
   engine.set_fps_cap(60);
   engine.load_font("lhll.ttf");
   engine.load_image("img/basic_style.png");
@@ -73,18 +73,34 @@ int main(int argc, char** argv) {
     if (pos > length - window_size) { pos = length - window_size; }
     if (pos < 0) { pos = 0; }
 
-    mouse_hold = false;
-    for (const auto& r : rows) {
-      if (r.mouse_hold) {
-        mouse_hold = true;
-        break;
-      }
-    }
-
     for (unsigned i = 0; i < rows.size(); ++i) {
-      rows[i].update(engine);
+      bool x_in_range = (engine.get_mouse_pos_x() >= rows[i].body.x) && (engine.get_mouse_pos_x() <= (rows[i].body.x + rows[i].body.w));
+      bool y_in_range = (engine.get_mouse_pos_y() >= rows[i].body.y) && (engine.get_mouse_pos_y() <= (rows[i].body.y + rows[i].body.h));
+      rows[i].mouse_hover = x_in_range && y_in_range;
 
-      if (rows[i].mouse_click) {
+      float move = engine.get_mouse_pos_y() - rows[i].prev_mouse_y;
+      if (move < 0) { move *= -1; }
+
+      bool mouse_left = engine.mouse_state == SDL_BUTTON(SDL_BUTTON_LEFT);
+
+      if (!mouse_left) {
+        rows[i].click_lock = false;
+        rows[i].mouse_hold = false;
+        rows[i].prev_mouse_y = engine.get_mouse_pos_y();
+      }
+      if (!rows[i].mouse_hover && mouse_left) {
+        rows[i].click_lock = true;
+      }
+      if (mouse_left && rows[i].mouse_hover && rows[i].selected && (move > 0)) {
+        rows[i].mouse_hold = true;
+      }
+
+      if (!rows[i].mouse_hold) {
+        rows[i].mouse_down = rows[i].mouse_hover && mouse_left && !rows[i].click_lock && engine.get_mouse_button_down();
+        rows[i].mouse_up = rows[i].mouse_hover && mouse_left && !rows[i].click_lock && engine.get_mouse_button_up();
+      }
+
+      if (rows[i].mouse_down) {
         if (engine.keyboard_state[SDL_SCANCODE_LSHIFT] && (selection_start >= 0)) {
           for (auto& r : rows) { r.selected = false; }
 
@@ -104,12 +120,7 @@ int main(int argc, char** argv) {
             rows[j].selected = true;
           }
         }
-        else if (rows[i].selected && (selection_start == selection_end)) {
-          rows[i].selected = false;
-          selection_start = -1;
-          selection_end = -1;
-        }
-        else {
+        else if (!rows[i].selected) {
           for (auto& r : rows) { r.selected = false; }
           rows[i].selected = true;
           selection_start = i;
@@ -117,8 +128,36 @@ int main(int argc, char** argv) {
         }
       }
 
-      if (!(mouse_hold && rows[i].selected)) {
+      if (rows[i].mouse_up && rows[i].selected && !engine.keyboard_state[SDL_SCANCODE_LSHIFT]) {
+        for (auto& r : rows) { r.selected = false; }
+        rows[i].selected = true;
+        selection_start = i;
+        selection_end = i;
+      }
+
+      if (!mouse_hold || !rows[i].selected) {
         rows[i].body.y = (side_gap + i * offset) - pos;
+      }
+    }
+
+    bool mouse_hover = false;
+    for (const auto& r : rows) {
+      if (r.mouse_hover) {
+        mouse_hover = true;
+        break;
+      }
+    }
+    if (!mouse_hover && engine.get_mouse_button_down()) {
+      for (auto& r : rows) { r.selected = false; }
+      selection_start = -1;
+      selection_end = -1;
+    }
+
+    mouse_hold = false;
+    for (const auto& r : rows) {
+      if (r.mouse_hold) {
+        mouse_hold = true;
+        break;
       }
     }
 

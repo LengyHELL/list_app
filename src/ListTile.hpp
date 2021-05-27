@@ -21,28 +21,26 @@ private:
   unsigned text_size = 0;
   SDL_Color text_color = {0, 0, 0, 0};
 
-  bool on_mouse_down = false;
-  bool click_lock = true;
-
-  float timer = 0;
 public:
   // variables
+  bool click_lock = true;
   bool mouse_hover = false;
   bool selected = false;
   bool mouse_hold = false;
-  bool mouse_click = false;
+  bool mouse_down = false;
+  bool mouse_up = false;
+  float prev_mouse_y = 0;
 
   // constructor, destructor
   ListTile() {}
 
   ListTile(const std::string& style, const Rect& body, const std::string& text, const unsigned& text_size,
-    const SDL_Color& text_color, const bool& on_mouse_down = false, const Coord& cut_size = Coord(3, 3));
+    const SDL_Color& text_color, const Coord& cut_size = Coord(3, 3));
 
   ~ListTile() {}
 
   //functions
   void draw(const Engine& engine);
-  void update(const Engine& engine);
 };
 
 #endif
